@@ -75,73 +75,46 @@ function getQueryString(name) {
 }
 
 
-
-//5-    转化时间
-//json格式时间转化为格式化时间 yyyy-MM-dd HH:mm:ss
-var convertDateFuncHMS = function (jsondate) {
-    if (jsondate != null && jsondate != "") {
-        jsondate = jsondate.replace("/Date(", "").replace(")/", "");
-        if (jsondate.indexOf("+") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("+"));
-        } else if (jsondate.indexOf("-") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("-"));
-        }
-        var date = new Date(parseInt(jsondate, 10));
-        var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
-        var currentDate = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-        var hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
-        var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
-        var second = date.getMilliseconds() / 1000 < 10 ? "0" + parseInt(date.getMilliseconds() / 1000) : parseInt(date.getMilliseconds() / 1000);
-        return date.getFullYear() + "-" + month + "-" + currentDate + hours + ":" + minutes + ":" + second
-    } else {
-        return "";
+/**
+ * 在原有日期基础上,增加days天数
+ * @param {*} date //当前传输日期
+ * @param {*} days //增加天数
+ */
+function addDate(date, days) {
+    if(days == undefined || days == '') {
+        days = 1;
     }
-};
+    var date = new Date(date);
+    date.setDate(date.getDate() + days);
+    var month = date.getMonth() + 1;//返回的是单个的时间:1或者双的例如:12
+    var day = date.getDate();
+    var mm = "'" + month + "'";
+    var dd = "'" + day + "'";
 
-
-//json格式时间转化为格式化时间 yyyy MM dd HH mm ss
-var convertDateFuncYMDHMS = function (jsondate) {
-    if (jsondate != "" && jsondate != null) {
-        jsondate = jsondate.replace("/Date(", "").replace(")/", "");
-        if (jsondate.indexOf("+") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("+"));
-        } else if (jsondate.indexOf("-") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("-"));
-        }
-        var date = new Date(parseInt(jsondate, 10));
-        var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
-        var currentDate = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-        var hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
-        var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
-        var second = date.getMilliseconds() / 1000 < 10 ? "0" + parseInt(date.getMilliseconds() / 1000) : parseInt(date.getMilliseconds() / 1000);
-        return date.getFullYear() + '' + month + currentDate + hours + minutes + second
-    } else {
-        return "";
+    //因此需要判断单位数前面加0
+    if(mm.length == 3) {
+        month = "0" + month;
     }
-};
-
-
-
-//json格式时间转化为格式化时间 yyyy-MM-dd
-var convertDateFunc = function (jsondate) {
-    if (jsondate != null && jsondate != "") {
-        jsondate = jsondate.replace("/Date(", "").replace(")/", "");
-        if (jsondate.indexOf("+") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("+"));
-        } else if (jsondate.indexOf("-") > 0) {
-            jsondate = jsondate.substring(0, jsondate.indexOf("-"));
-        }
-        var date = new Date(parseInt(jsondate, 10));
-        var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
-        var currentDate = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-        return date.getFullYear() + "-" + month + "-" + currentDate;
-    } else {
-        return "";
+    if(dd.length == 3) {
+        day = "0" + day;
     }
-};
 
+    var time = date.getFullYear() + "-" + month + "-" + day
+    return time;
+}
 
-
+var addTime = addDate("2017-07-24", 2);
+console.log(addTime);//2017-07-26
+/**
+*日期做差
+*/
+function dateSubstract(begin, end) {
+    var dateStart = new Date(begin);
+    var dateEnd = new Date(end);
+    var difValue = (dateEnd - dateStart) / ((1000 * 60 * 60 * 24));
+    return difValue;
+}
+// console.log(dateSubstract('2019-05-08', '2019-05-10'));//2
 
 
 //6-    设置cookie(用在登录时,checked时保存周期)
@@ -185,6 +158,30 @@ function getCookie(name) {
 
 
 
+//获取cookie值(兼容ios转码)
+function GetCookie(cname) {
+    var arr,reg = new RegExp("(^| )" + cname + "=([^;]*)(;|$)");
+    if (arr = document.cookie.match(reg)) {
+        var cvalue = decodeURI(arr[2]);
+        return cvalue;
+    } else {
+        return null;
+    }
+}
+
+
+
+//设置cookie(兼容ios转码)
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    cvalue= encodeURI(cvalue);
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+
+
 //8- 数组排序并去重
 
 let arr1 = [1, 25, 2, 26, 1234, 6, 213];
@@ -192,63 +189,6 @@ let arr2 = [2, 6, 2134, 6, 31, 623];
 let c = [...new Set([...arr1, ...arr2])].sort((a, b) => {
     return a - b;
 });
-
-//9-  ajax获取数据方法
-var AjaxF = function (params, ipPort) {
-    if (userToken == null || userToken == "" || userToken == undefined) {
-        return new {
-            success: false,
-            message: "身份验证失败",
-            data: null
-        };
-    } else {
-        $.ajax({
-            url: ipPort,
-            type: "get",
-            data: { usertoken: usertoken, params: params },
-            dataType: "jsonp",
-            success: function (data) {
-                return new {
-                    success: true,
-                    message: "success",
-                    data: data
-                }
-            },
-            error: function (error) {
-                return new {
-                    success: false,
-                    message: "error",
-                    data: error
-                }
-            }
-        });
-    }
-}
-//调用
-var objA = {
-     property: [],//公司性质
-     cityid: [],//办公地点
-     setup_date: [],//成立年限
-     b_company_scale: []//管理规模
-}
-var oUrl = 'GetPublicCompanyUpdateTime?jsoncallback=?'
-var bigObj = AjaxF(objA,oUrl);
-for(let i = 0;i<bigObj.data.length;i++){
-    
-}
-
-
-
-
-/**对ie的兼容 */
-//10- 根据毫秒获取时间【年-月-日】(兼容ie专用)
-function GetDateByMillisecond(millisecond) {
-    var date = new Date(millisecond.replace('-', '/'));//为了兼容IE　必须将－　换成／
-    var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
-    var currentDate = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-    return date.getFullYear() + "-" + month + "-" + currentDate;// + " " + hours + ":"
-
-};
 
 if (typeof handDate == "undefined") {
     var handDate = {};
@@ -340,7 +280,7 @@ $("input").on("keyup",function(){
 
 //12- 滚动条底部加载到底部加载更多
     /**判断滚动条是否滚动到底部 */
-    document.getElementById('contentContainer').onscroll=function(){
+document.getElementById('contentContainer').onscroll=function(){
     if(this.scrollTop+this.offsetHeight>=this.scrollHeight){
         pbPageNum++;
     }
@@ -458,11 +398,32 @@ var division = function (arg1, arg2) {
 };
 
 
+    /**
+     * arr 数组
+     * num 拆分数量
+    */
+    function splitArrNum(arr,num){
+        let newArr = [];
+        for(let i = 0;i<arr.length;i=i+num){
+            newArr.push(arr.slice(i,i+num))
+        }
+        return newArr;
+    }
+
+
+
 
 /*
  *15    -函数抖动节流(onmouseover,onresize,onscroll);
  */
-function delayFn2 (fn, delay, mustDelay){
+/**
+ * 
+ * @param {} fn 函数名
+ * @param {} delay 延迟时间
+ * @param {} mustDelay 间隔时间 触发
+ * @returns {} 
+ */
+function delayFn (fn, delay, mustDelay){
      var timer = null;
      var t_start;
      return function(){
@@ -486,9 +447,47 @@ function delayFn2 (fn, delay, mustDelay){
          }
      };
 }
+/**
+ * 函数节流,减少资源消耗
+ */
+window.onscroll = delayFn(scrollHead, 100, 100);
+/**************************************更新 抖动与节流*********************/
+//防止抖动(输入框持续输入)
+//持续触发不执行不触发的一段时间之后再执行
+ function debounce(func,delay){
+    let timeout;
+    return function(){
+        clearTimeout(timeout);
+        timeout = setTimeout(function(){
+            func.apply(this,arguments)
+        },delay)
+    }
+ 
+ }
+//var i = 0;
+//    box.onmousemove = debounce(function (e) {
+//        console.log(i++)
+//
+//    }, 200);
+//节流(向下无限滚动获取新数据,图片懒加载)
+//持续触发并不会执行多次到一定时间再去执行
+function throttle(func,delay){
+    let run = true;
+    return function(){
+        if(!run){
+            return;//如果关闭了,就不执行以下代码
+        }
+        run = false;//持续触发的话,run一直是falase,让他一直停留在上面的判断
+        setTimeout(function(){
+            func.apply(this,arguments);
+            run  = true;//定时器到时候自己打开,函数继续执行
+        },delay)
+    }
+}
 
-
-
+   // box.onmousemove = throttle(function (e) {
+//        console.log(i++)
+//    }, 500)
 
 /** 16 -  粘贴自动携带版本声明 */
  document.addEventListener('copy', function (event) {
@@ -671,15 +670,15 @@ dragBlock(pdfIcon);//调用拖动方法
         return new F(selector, context)
     };
 //$.fn是F的prototype
-
+// $.fn  //多个使用,例如show  $('p').bold();
+//$.extend()方法作用就是合并另个对象，有相同的则覆盖，没有相同的则添加,引用方法: $.minValue(20,30);
+// $.fn.extend必须得加元素才能生效,//实例化对象后添加jquery的成员函数 $("p").alertWhileClick
    $.fn = F.prototype;
 
 //在F的原型上定义方法   
 F.prototype.hide = function(){
     this.element.style.display = 'none';
 };
-
-
 
 var $ = function(selector, context) {
     return new F(selector, context);
@@ -714,26 +713,16 @@ $.fn.extend({
     data: function() {},
     // ...
 });
+//立即执行函数
+(function(str){
+    alert(str)
+})('output')
+//相当于
+funtion OutPutFun(str){
+    alert(str);
+}
+OutPutFun("output");
 
-
-
-
-
-/**21 --- 防止用户点击过快*/
-   var isClick = true;
-        var num = 0;
-        function add(){
-            if(isClick){
-              isClick = false;
-              console.log(num++);
-
-
-                setTimeout(function(){
-                    isClick = true;
-                }, 1000);
-            }
-
-        }
 
 /**22 --快速排序 */
 //找基准
@@ -812,35 +801,119 @@ checkType('money',function (str) {
 //使用金额校验规则
 console.log(checkType('18.36','money'));
 
-/***数据库数据转表****/
-//https://www.easy-mock.com/project/5b3c364310a1f82172313f40
-//success代码
-    var dateArr = [];
-    for(var i = 0;i<obj.data.length;i++){
-        dateArr.push(obj.data[i].enddate);
+//慎用iframe
+//当子界面`有用到document属性时候,有bug,需要调用window.parent去请求例如微信支付
+ window.parent.document.addEventListener('WeixinJSBridgeReady', comnfirmPay, false);
+window.parent.WeixinJSBridge.invoke
+
+
+
+
+
+/********判断浏览器类型 进行不同网页跳转*********/
+function goPAGE() {
+
+    //先获取当前链接 是PC 还是mobile
+    var ntpe = null;
+    if (window.location.href.indexOf('pc') != -1) {
+        ntpe = 'pc';
     }
-    var newdateArr = [...new Set(dateArr)];
-    var th='<td>--</td>'
-    for(var i = 0;i<newdateArr.length;i++){
-        th+='<td>'+newdateArr[i]+'</td>'
+
+    if (window.location.href.indexOf('mobile') != -1) {
+        ntpe = 'mobile';
     }
-    $("#csTh").html(th);
-    var firstName=obj.data[0].holdclass;
-    var td='<td>'+obj.data[0].holdclass+'</td>';
-    for(var i = 0;i<obj.data.length;i++){
-        if  (firstName==obj.data[i].holdclass){
-            td+='<td>'+obj.data[i].sum+'</td>';
-            if(i==obj.data.length-1){
-                $("#csTbody").append('<tr>'+td+'</tr>');//最后一次添加的数据
+
+
+    //如果是移动端浏览器
+    if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i))) {
+        //如果地址是PC端的 进行url转换
+        if (ntpe == 'pc') {
+            window.location = window.location.href.replace('pc', 'mobile');
+        }
+        else if (ntpe == null) {
+            window.location = '/mobile/index.html';
+        }
+    }
+    //如果是电脑端浏览器
+    else {
+        //如果地址是mobile的 进行url转换
+        if (ntpe == 'mobile') {
+            window.location = window.location.href.replace('mobile', 'pc');
+        }
+        else if (ntpe == null) {
+            window.location = '/pc/index.html';
+        }
+    }
+}
+/*正则匹配去掉扒站工具标签  tppabs=\"[a-zA-z]+://[^\s]*\"   tppabs="h[^"]*" */
+
+/**************Node.js******************** */
+//express是更改
+//body-parser作用是对post请求的请求体进行解析,解析req.body的数据,解析成功后覆盖原来的req.body,失败为{};
+
+/**
+ * 判断是跳链还是直接加载界面
+ * 跳链渲染当前code的select跳转的列表
+ * 直接加载当前select第一条列表
+ * @returns {} 
+ */
+function getSelectProductNew() {
+    var selectArr = [];
+    $.ajax({
+        url: '/Company/GetCompanyProduct/',
+        type: "POST",
+        dataType: "json",
+        async: false,//同步执行
+        success: function (data) {
+            var result = data[0];
+            if (result.code == 200 && result.data.length > 0) {            
+                for (var i = 0; i < result.data.length; i++) {
+                    selectArr.push({//combobox必须是数组
+                        'code': result.data[i].Key,
+                        'txt': result.data[i].Value
+                    });
+                }
+                //前端渲染combobox
+                $('#selectProduct').combobox({
+                    width:200,
+                    textField: 'txt',
+                    valueField: 'code',
+                    data: selectArr,
+                    onSelect: function (record) {
+                        fund_id = record.code;
+                        mainCondition.fund_id = fund_id;
+                        $('#myproductTable').bootstrapTable('refresh');
+                    }
+                });
+               
+                fund_id = getQueryString('fund_id');//跳链获取
+                if (fund_id != null && fund_id != 'null' && fund_id != '') {  //从公司产品点击跳转,
+                    for (var j = 0; j < selectArr.length; j++) {//循环出数组中是当前传值的code
+                        if (fund_id == selectArr[j].code) {
+                            $("#selectProduct").combobox('select', selectArr[j].code); //选中当前传输的
+                        } else {
+                            $("#selectProduct").combobox('select', selectArr[0].code);//选中第一条
+                        }
+                    }
+                } else {//直接选中导航栏默认第一只产品的列表
+                    $("#selectProduct").combobox('select', selectArr[0].code);//选中第一条
+                }
+
+                fund_id = $('#selectProduct').combobox('getValue');//获取当前选中的
+                mainCondition.fund_id = fund_id;
+                initDataTable();//初始化列表
+             
+            } else {
+                errorSnackbar("获取数据出现异常，请稍后重试！");
             }
+
+        },
+        error: function (json) {
+            console.log(json);
+            errorSnackbar("获取数据出现异常，请重试！");
         }
-        else {
-            $("#csTbody").append('<tr>'+td+'</tr>');
-             firstName=obj.data[i].holdclass;
-            td='<td>'+obj.data[i].holdclass+'</td>';          
-            td+='<td>'+obj.data[i].sum+'</td>';
-        }
-    }
+    });
+}
 
 
 
@@ -881,11 +954,7 @@ function goPAGE() {
 }
 
 
-/*正则匹配去掉扒站工具标签  tppabs=\"[a-zA-z]+://[^\s]*\"   tppabs="h[^"]*" */
 
-/**************Node.js******************** */
-//express是更改
-//body-parser作用是对post请求的请求体进行解析,解析req.body的数据,解析成功后覆盖原来的req.body,失败为{};
 
 
 /****************websockets************************ */
@@ -928,11 +997,78 @@ var one= new CS();
 //3 CS.call(one) 将CS的this指针替换成one,然后调用CS原型上的方法
 
 
-<<<<<<< HEAD
+/********************iframe中父子元素相互调用的方法***********************/
+
+//子调父
+window.parent.test()
+//父调子
+var childWindow = $("#windowPage")[0].contentWindow; //表示获取了嵌入在iframe中的子页面的window对象
+var sumC = $("#windowPage")[0];
+var childT0 = $(sumC).attr("src").indexOf('T0');
+if (childT0 != -1) {
+     try {
+         childWindow.refreshFocusTable(msg); //调用子页面中的subFunction方法。左上角//ToIndex 首页 左侧 所有信号列表
+     } catch (e) {
+
+     }
+ }
+/**
+ * 将复制t1的宽度给t2(仅复制宽度)
+ * @param {*} t1 jQuery对象表格内部
+ * @param {*} t2 jQuery对象表头
+ */
+function copyTableWidth(t1,t2){
+    var t1_td_length = t1.find('tr').eq(0).find('th').length;
+    var t2_td_length = t2.find('tr').eq(0).find('th').length;
+
+    if(t1_td_length===t2_td_length){
+        for(var i=0;i<t1_td_length;i++){
+            t2.find('th').eq(i).width(t1.find('td').eq(i).width());
+        }
+    }
+}
+
+//在table的ajax请求后的complete调用方法 copyTableWidth($("#tableBody"),$("#tableHead"));
+
+
+
+
+
+
+
+
+/****************数据库传输json格式问题(该传输字符串还是json)********************/
+
+//平时一般传输的是json,但是使用base64加密困难
+//特殊时候传输字符串,需要用JSON.parse或者eval,但是eval解析成json的时候,会识别并执行js代码,而JSON.parse会报错
+//JSON.stringfy()很少使用
+
+/***************验证码重新发送效果*******************/
+function settime($obj, time) {
+    if (time == 0) {
+      $obj.attr("disabled", false); 
+      $obj.css("background", "#f38401").css("cursor", "pointer");
+      $obj.text("获取手机验证码"); 
+      return; 
+    } else { 
+      $obj.attr("disabled", true);  
+      $obj.css("color", "#ccc").css("cursor", "not-allowed");
+      $obj.css("border-color", "#ccc") 
+      $obj.text("重新发送(" + time + ")");
+      time--; 
+    } 
+    setTimeout(function () { settime($obj, time) }, 1000) 
+  }
+  $("#getPhoneCode").click(function(){
+    settime($("#getPhoneCode"),60);
+  })
+
+
+
+
 /*微信
 =======
 /*微信小程序
->>>>>>> 9f4bf383315aa0149db6f6a75fa4d87f77825ec3
 在js中引用公共方法*/
 //1-          在根目录下新建一个utils文件夹，新建util.js在这里我们可以将通用的方法写在这
 //是否为中文
@@ -984,9 +1120,6 @@ module.exports = {
 <view class="td {{filters.trendColor(item.c_return_annual)}}">{{item.c_return_annual}}%</view>
 
 
-<<<<<<< HEAD
-
-=======
 //在wx.request接口中跳转
 setTimeout(function(){
   wx.switchTab({
@@ -1014,9 +1147,9 @@ setTimeout(function(){
 
 //小程序生命周期授权
 
-1/设定index为首页,在app.js中进行校验授权checkUserInfoAuth();成功返回首页,失败返回授权界面(新界面)
-2/在index中的onshow中调用 app.checkUserInfoAuth();onshow为界面刚初始化时候或者从后台进入前台显示时
->>>>>>> 9f4bf383315aa0149db6f6a75fa4d87f77825ec3
+//1/设定index为首页,在app.js中进行校验授权checkUserInfoAuth();成功返回首页,失败返回授权界面(新界面)
+//2/在index中的onshow中调用 app.checkUserInfoAuth();onshow为界面刚初始化时候或者从后台进入前台显示时
+
 
 
 
